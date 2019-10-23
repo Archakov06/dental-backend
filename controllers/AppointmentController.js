@@ -1,6 +1,10 @@
 const { validationResult } = require('express-validator');
 const dayjs = require('dayjs');
 
+const ruLocale = require('dayjs/locale/ru');
+
+const { groupBy, reduce } = require('lodash');
+
 const { Appointment, Patient } = require('../models');
 
 const { sendSMS } = require('../utils');
@@ -17,13 +21,13 @@ const create = async function(req, res) {
     diagnosis: req.body.diagnosis,
     price: req.body.price,
     date: req.body.date,
-    time: req.body.time
+    time: req.body.time,
   };
 
   if (!errors.isEmpty()) {
     return res.status(422).json({
       success: false,
-      message: errors.array()
+      message: errors.array(),
     });
   }
 
@@ -32,7 +36,7 @@ const create = async function(req, res) {
   } catch (e) {
     return res.status(404).json({
       success: false,
-      message: 'PATIENT_NOT_FOUND'
+      message: 'PATIENT_NOT_FOUND',
     });
   }
 
@@ -40,7 +44,7 @@ const create = async function(req, res) {
     if (err) {
       return res.status(500).json({
         success: false,
-        message: err
+        message: err,
       });
     }
 
@@ -48,7 +52,7 @@ const create = async function(req, res) {
       `${data.date
         .split('.')
         .reverse()
-        .join('.')}T${data.time}`
+        .join('.')}T${data.time}`,
     )
       .subtract(1, 'minute')
       .unix();
@@ -56,12 +60,12 @@ const create = async function(req, res) {
     sendSMS({
       number: patient.phone,
       time: delayedTime,
-      text: `Сегодня в ${data.time} у Вас приём в стоматологию "Granit".`
+      text: `Сегодня в ${data.time} у Вас приём в стоматологию "Granit".`,
     });
 
     res.status(201).json({
       success: true,
-      data: doc
+      data: doc,
     });
   });
 };
@@ -75,36 +79,33 @@ const update = async function(req, res) {
     diagnosis: req.body.diagnosis,
     price: req.body.price,
     date: req.body.date,
-    time: req.body.time
+    time: req.body.time,
   };
 
   if (!errors.isEmpty()) {
     return res.status(422).json({
       success: false,
-      message: errors.array()
+      message: errors.array(),
     });
   }
 
-  Appointment.updateOne({ _id: appointmentId }, { $set: data }, function(
-    err,
-    doc
-  ) {
+  Appointment.updateOne({ _id: appointmentId }, { $set: data }, function(err, doc) {
     if (err) {
       return res.status(500).json({
         success: false,
-        message: err
+        message: err,
       });
     }
 
     if (!doc) {
       return res.status(404).json({
         success: false,
-        message: 'APPOINTMENT_NOT_FOUND'
+        message: 'APPOINTMENT_NOT_FOUND',
       });
     }
 
     res.json({
-      success: true
+      success: true,
     });
   });
 };
@@ -117,7 +118,7 @@ const remove = async function(req, res) {
   } catch (e) {
     return res.status(404).json({
       success: false,
-      message: 'APPOINTMENT_NOT_FOUND'
+      message: 'APPOINTMENT_NOT_FOUND',
     });
   }
 
@@ -125,12 +126,12 @@ const remove = async function(req, res) {
     if (err) {
       return res.status(500).json({
         success: false,
-        message: err
+        message: err,
       });
     }
 
     res.json({
-      status: 'succces'
+      status: 'succces',
     });
   });
 };
@@ -142,13 +143,28 @@ const all = function(req, res) {
       if (err) {
         return res.status(500).json({
           success: false,
-          message: err
+          message: err,
         });
       }
 
       res.json({
         status: 'succces',
-        data: docs
+        data: reduce(
+          groupBy(docs, 'date'),
+          (result, value, key) => {
+            result = [
+              ...result,
+              {
+                title: dayjs(key)
+                  .locale(ruLocale)
+                  .format('D MMMM'),
+                data: value,
+              },
+            ];
+            return result;
+          },
+          [],
+        ),
       });
     });
 };
@@ -157,7 +173,7 @@ AppointmentController.prototype = {
   all,
   create,
   remove,
-  update
+  update,
 };
 
 module.exports = AppointmentController;
