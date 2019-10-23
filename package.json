@@ -8,10 +8,14 @@
     "watch": "nodemon index.js"
   },
   "dependencies": {
+    "axios": "^0.19.0",
     "cors": "^2.8.5",
+    "dayjs": "^1.8.16",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-validator": "^6.2.0",
     "mongoose": "^5.7.5",
-    "nodemon": "^1.19.4"
+    "nodemon": "^1.19.4",
+    "querystring": "^0.2.0"
   }
 }
