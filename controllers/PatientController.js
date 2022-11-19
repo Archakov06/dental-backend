@@ -10,12 +10,16 @@ const create = function(req, res) {
     phone: req.body.phone
   };
 
+  console.log(req.body)
+
   if (!errors.isEmpty()) {
     return res.status(422).json({
       success: false,
       message: errors.array()
     });
   }
+
+  console.log(data)
 
   Patient.create(data, function(err, doc) {
     if (err) {
